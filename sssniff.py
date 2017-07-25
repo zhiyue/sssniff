@@ -74,10 +74,10 @@ def sniffer(pkt):
 
         # SSR
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
-	        track[c].append((len(tcp.payload), s))
+	        track[c].append(len(tcp.payload))
 		if len(track[c]) >= 8:
                         e = entropy(track[c])
-                        if e[0] > 1.6:
+                        if e > 1.78:
 				add(c, 1)
 			else:
 				add(c, -1)
