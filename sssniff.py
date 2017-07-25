@@ -58,14 +58,26 @@ def sniffer(pkt):
 		del track[c]
 		return
 
+        # SS Original
+	# if tcp.flags & dpkt.tcp.TH_PUSH != 0:
+	# 	track[c].append((entropy(dist(str(tcp.payload))), s))
+	# 	if len(track[c]) >= 4:
+	# 		if track[c][0][0] > 4.8 or \
+	# 		   (track[c][0][0] > 4.4 and track[c][1][0] > 4.2) or \
+	# 		   (track[c][0][0] > 4.2 and track[c][2][0] > 4.2 and \
+	# 			track[c][0][1] == track[c][2][1]) or \
+	# 		   track[c][0][1] == track[c][1][1]:
+	# 			add(c, 1)
+	# 		else:
+	# 			add(c, -1)
+	# 		del track[c]
+
+        # SSR
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
-		track[c].append((entropy(dist(str(tcp.payload))), s))
-		if len(track[c]) >= 4:
-			if track[c][0][0] > 4.8 or \
-			   (track[c][0][0] > 4.4 and track[c][1][0] > 4.2) or \
-			   (track[c][0][0] > 4.2 and track[c][2][0] > 4.2 and \
-				track[c][0][1] == track[c][2][1]) or \
-			   track[c][0][1] == track[c][1][1]:
+	        track[c].append((len(tcp.payload), s))
+		if len(track[c]) >= 8:
+                        e = entropy(track[c])
+                        if e[0] > 1.6:
 				add(c, 1)
 			else:
 				add(c, -1)
