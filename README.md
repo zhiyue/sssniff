@@ -1,3 +1,26 @@
+ss(r)Sniff
+-------
+
+Yet another proof of concept of detecting SS(R) traffic. Forked from https://github.com/isofew/sssniff.
+
+It's a demostration that SS(R) is vulnerable to traffic analysis.
+
+It also shows detecting SSR with traffic analysis is much cheaper than SS, as well as has a much smaller false positive
+rate.
+
+### How it works?
+
+It computes entropy of the first 8 packet lengths of each TCP connection. When the entropy is larger than a threshold, the
+conecction is detected as a SSR connection.
+
+### Why it works?
+
+The traffic of SS(R) looks randomized with a relative high entropy of the first 2 to 3 packets. As a result, SS(R) can be detected by computing the entropy of these packets. The drawback is this apporach shows high false positive rate and is very expensive.
+
+Besides randomizing trffic, SSR also randomizes the packet lengths, which would cause many packets smaller than MTU. By
+computing the entropy of the packet lengths, the connection can be detected easily. Without computing the entropy of
+whole packets, detecting SSR requires much less computing power.
+
 ssSniff
 ------
 ShadowSocks(SS) traffic sniffer
