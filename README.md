@@ -10,7 +10,7 @@ rate.
 
 ### How it works?
 
-It computes entropy of the first 8 packet lengths of each TCP connection. When the entropy is larger than a threshold, the
+It computes entropy of the first 32 packet lengths of each TCP connection. When the entropy is larger than a threshold, the
 conecction is detected as a SSR connection.
 
 ### Why it works?

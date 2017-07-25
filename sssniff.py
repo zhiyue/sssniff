@@ -27,7 +27,7 @@ def dist(str):
 
 score = {}
 blocked = {}
-thres = 15
+thres = 16
 def add_score(c, x):
 	if blocked.has_key(c):
 		return
@@ -75,9 +75,9 @@ def sniffer(pkt):
         # SSR
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
 	        track[c].append(len(tcp.payload))
-		if len(track[c]) >= 8:
-                        e = entropy(track[c])
-                        if e > 1.78:
+		if len(track[c]) >= 32:
+                        e = pow(entropy(track[c][8:32]), 2)
+                        if e > 9:
 				add(c, 1)
 			else:
 				add(c, -1)
