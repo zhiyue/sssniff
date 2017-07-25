@@ -51,6 +51,7 @@ def sniffer(pkt):
         global sample
         if sample > limit:
             score.clear()
+            track.clear()
             sample = 0
         sample += 1
 
@@ -83,13 +84,14 @@ def sniffer(pkt):
 
         # SSR
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
-	        track[c].append(len(tcp.payload))
-		if len(track[c]) >= 32:
+                if len(track[c]) <= 32:
+                        track[c].append(len(tcp.payload))
+
+                if len(track[c]) == 32:
                         e = pow(entropy(track[c][8:32]), 2)
                         if e > 9:
 				add(c, 1)
 			else:
 				add(c, -1)
-			del track[c]
 
 sniff(filter='tcp', store=False, prn=sniffer)
