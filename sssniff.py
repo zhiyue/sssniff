@@ -28,6 +28,9 @@ def dist(str):
 score = {}
 blocked = {}
 thres = 16
+sample = 0
+limit = 40000
+
 def add_score(c, x):
 	if blocked.has_key(c):
 		return
@@ -45,6 +48,12 @@ def add(c, x):
 
 track = {}
 def sniffer(pkt):
+        global sample
+        if sample > limit:
+            score.clear()
+            sample = 0
+        sample += 1
+
 	ip = pkt.payload
 	tcp = ip.payload
 	c, s = conn(ip.src, ip.dst, tcp.sport, tcp.dport)
