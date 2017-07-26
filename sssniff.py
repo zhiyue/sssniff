@@ -29,7 +29,7 @@ score = {}
 blocked = {}
 thres = 16
 sample = 0
-limit = 100000
+limit = 200000
 mtu = 1600
 
 def add_score(c, x):
