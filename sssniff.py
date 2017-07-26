@@ -29,7 +29,8 @@ score = {}
 blocked = {}
 thres = 16
 sample = 0
-limit = 40000
+limit = 100000
+mtu = 1600
 
 def add_score(c, x):
 	if blocked.has_key(c):
@@ -39,8 +40,9 @@ def add_score(c, x):
 	else:
 		score[c] += x
 	if score[c] >= thres:
-		print c
+                print "detected:", c
 		blocked[c] = True
+        print "conn:", c, "score", score[c]
 
 def add(c, x):
 	add_score((c[0], c[2]), x)
@@ -69,29 +71,55 @@ def sniffer(pkt):
 		return
 
         # SS Original
-	# if tcp.flags & dpkt.tcp.TH_PUSH != 0:
-	# 	track[c].append((entropy(dist(str(tcp.payload))), s))
-	# 	if len(track[c]) >= 4:
-	# 		if track[c][0][0] > 4.8 or \
-	# 		   (track[c][0][0] > 4.4 and track[c][1][0] > 4.2) or \
-	# 		   (track[c][0][0] > 4.2 and track[c][2][0] > 4.2 and \
-	# 			track[c][0][1] == track[c][2][1]) or \
-	# 		   track[c][0][1] == track[c][1][1]:
-	# 			add(c, 1)
-	# 		else:
-	# 			add(c, -1)
-	# 		del track[c]
-
-        # SSR
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
-                if len(track[c]) <= 32:
-                        track[c].append(len(tcp.payload))
-
-                if len(track[c]) == 32:
-                        e = pow(entropy(track[c][8:32]), 2)
-                        if e > 9:
+		track[c].append((entropy(dist(str(tcp.payload))), s))
+		if len(track[c]) >= 4:
+			if track[c][0][0] > 4.8 or \
+			   (track[c][0][0] > 4.4 and track[c][1][0] > 4.2) or \
+			   (track[c][0][0] > 4.2 and track[c][2][0] > 4.2 and \
+				track[c][0][1] == track[c][2][1]) or \
+			   track[c][0][1] == track[c][1][1]:
 				add(c, 1)
 			else:
 				add(c, -1)
+			del track[c]
 
-sniff(filter='tcp', store=False, prn=sniffer)
+len_dist = {}
+len_count = {}
+def ssr_sniffer(pkt):
+        global sample
+        if sample > limit:
+            score.clear()
+            len_dist.clear()
+            len_count.clear()
+            sample = 0
+        sample += 1
+
+	ip = pkt.payload
+	tcp = ip.payload
+        c = (ip.src, tcp.sport)
+
+        if not len_count.has_key(c):
+                len_count[c] = 0
+                len_dist[c] = np.zeros(mtu)
+
+        # SSR
+	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
+                if len_count[c] <= 128:
+                        l = len(tcp.payload) % mtu
+                        len_dist[c][l] += 1
+                        len_count[c] += 1
+
+                if len_count[c] == 128:
+                        e = entropy(len_dist[c])
+                        # print len_count
+                        # print len_dist[c]
+                        # print c, e
+                        if e > 3.2:
+				add_score(c, 1)
+			else:
+				add_score(c, -1)
+                        del len_dist[c]
+                        del len_count[c]
+
+sniff(filter='tcp', store=False, prn=ssr_sniffer)
