@@ -28,8 +28,8 @@ def dist(str):
 score = {}
 blocked = {}
 thres = 16
-sample = 0
-limit = 200000
+sample = 128
+limit = sample * 128
 mtu = 1600
 
 def add_score(c, x):
@@ -50,13 +50,6 @@ def add(c, x):
 
 track = {}
 def sniffer(pkt):
-        global sample
-        if sample > limit:
-            score.clear()
-            track.clear()
-            sample = 0
-        sample += 1
-
 	ip = pkt.payload
 	tcp = ip.payload
 	c, s = conn(ip.src, ip.dst, tcp.sport, tcp.dport)
@@ -87,14 +80,6 @@ def sniffer(pkt):
 len_dist = {}
 len_count = {}
 def ssr_sniffer(pkt):
-        global sample
-        if sample > limit:
-            score.clear()
-            len_dist.clear()
-            len_count.clear()
-            sample = 0
-        sample += 1
-
 	ip = pkt.payload
 	tcp = ip.payload
         c = (ip.src, tcp.sport)
@@ -105,21 +90,30 @@ def ssr_sniffer(pkt):
 
         # SSR
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
-                if len_count[c] <= 128:
-                        l = len(tcp.payload) % mtu
-                        len_dist[c][l] += 1
-                        len_count[c] += 1
+                l = len(tcp.payload) % mtu
+                len_dist[c][l] += 1
 
-                if len_count[c] == 128:
+                if len_count[c] > 0 and len_count[c] % sample == 0:
                         e = entropy(len_dist[c])
+                        len_dist[c] = np.zeros(mtu)
                         # print len_count
                         # print len_dist[c]
                         # print c, e
-                        if e > 3.2:
+                        if e > 4.0:
+                                add_score(c, 2)
+                        elif e > 3.4:
 				add_score(c, 1)
-			else:
+                        elif e < 3.0:
 				add_score(c, -1)
-                        del len_dist[c]
+                        elif e < 2.5:
+				add_score(c, -2)
+
+                len_count[c] += 1
+
+                if len_count[c] > limit:
                         del len_count[c]
+                        del len_dist[c]
+                        del score[c]
+
 
 sniff(filter='tcp', store=False, prn=ssr_sniffer)
