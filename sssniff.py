@@ -42,7 +42,7 @@ def add_score(c, x):
 		score[c] += x
 	if score[c] >= thres:
                 print("detected:", c)
-		blocked[c] = True
+                blocked[c] = True
         print("conn:", c, "score", score[c])
 
 def add(c, x):
