@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
 from scipy.stats import entropy
 from scapy.all import *
 import numpy as np
@@ -33,16 +34,16 @@ limit = sample * 128
 mtu = 1600
 
 def add_score(c, x):
-	if blocked.has_key(c):
+	if c in blocked:
 		return
-	if not score.has_key(c):
+	if c not in score:
 		score[c] = x
 	else:
 		score[c] += x
 	if score[c] >= thres:
-                print "detected:", c
+                print("detected:", c)
 		blocked[c] = True
-        print "conn:", c, "score", score[c]
+        print("conn:", c, "score", score[c])
 
 def add(c, x):
 	add_score((c[0], c[2]), x)
@@ -56,7 +57,7 @@ def sniffer(pkt):
 
 	if tcp.flags & dpkt.tcp.TH_SYN != 0:
 		track[c] = []
-	if not track.has_key(c):
+	if c not in track:
 		return
 
 	if tcp.flags & dpkt.tcp.TH_FIN != 0 or tcp.flags & dpkt.tcp.TH_RST != 0:
@@ -84,7 +85,7 @@ def ssr_sniffer(pkt):
 	tcp = ip.payload
         c = (ip.src, tcp.sport)
 
-        if not len_count.has_key(c):
+        if c not in len_count:
                 len_count[c] = 0
                 len_dist[c] = np.zeros(mtu)
 
@@ -96,9 +97,9 @@ def ssr_sniffer(pkt):
                 if len_count[c] > 0 and len_count[c] % sample == 0:
                         e = entropy(len_dist[c])
                         len_dist[c] = np.zeros(mtu)
-                        # print len_count
-                        # print len_dist[c]
-                        # print c, e
+                        # print(len_count)
+                        # print(len_dist[c])
+                        # print(c, e)
                         if e > 4.0:
                                 add_score(c, 2)
                         elif e > 3.4:
