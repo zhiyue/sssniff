@@ -41,9 +41,9 @@ def add_score(c, x):
 	else:
 		score[c] += x
 	if score[c] >= thres:
-                print("detected:", c)
-                blocked[c] = True
-        print("conn:", c, "score", score[c])
+		print("detected:", c)
+		blocked[c] = True
+	print("conn:", c, "score", score[c])
 
 def add(c, x):
 	add_score((c[0], c[2]), x)
@@ -64,57 +64,58 @@ def sniffer(pkt):
 		del track[c]
 		return
 
-        # SS Original
+		# SS Original
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
 		track[c].append((entropy(dist(str(tcp.payload))), s))
 		if len(track[c]) >= 4:
 			if track[c][0][0] > 4.8 or \
-			   (track[c][0][0] > 4.4 and track[c][1][0] > 4.2) or \
-			   (track[c][0][0] > 4.2 and track[c][2][0] > 4.2 and \
+				(track[c][0][0] > 4.4 and track[c][1][0] > 4.2) or \
+				(track[c][0][0] > 4.2 and track[c][2][0] > 4.2 and \
 				track[c][0][1] == track[c][2][1]) or \
-			   track[c][0][1] == track[c][1][1]:
-				add(c, 1)
+				track[c][0][1] == track[c][1][1]:
+					add(c, 1)
 			else:
-				add(c, -1)
+					add(c, -1)
 			del track[c]
+
 
 len_dist = {}
 len_count = {}
 def ssr_sniffer(pkt):
 	ip = pkt.payload
 	tcp = ip.payload
-        c = (ip.src, tcp.sport)
+	c = (ip.src, tcp.sport)
 
-        if c not in len_count:
-                len_count[c] = 0
-                len_dist[c] = np.zeros(mtu)
+	if c not in len_count:
+		len_count[c] = 0
+		len_dist[c] = np.zeros(mtu)
 
-        # SSR
+		# SSR
 	if tcp.flags & dpkt.tcp.TH_PUSH != 0:
-                l = len(tcp.payload) % mtu
-                len_dist[c][l] += 1
+		l = len(tcp.payload) % mtu
+		len_dist[c][l] += 1
 
-                if len_count[c] > 0 and len_count[c] % sample == 0:
-                        e = entropy(len_dist[c])
-                        len_dist[c] = np.zeros(mtu)
-                        # print(len_count)
-                        # print(len_dist[c])
-                        # print(c, e)
-                        if e > 4.0:
-                                add_score(c, 2)
-                        elif e > 3.4:
+		if len_count[c] > 0 and len_count[c] % sample == 0:
+			e = entropy(len_dist[c])
+			len_dist[c] = np.zeros(mtu)
+			# print(len_count)
+			# print(len_dist[c])
+			# print(c, e)
+			if e > 4.0:
+				add_score(c, 2)
+			elif e > 3.4:
 				add_score(c, 1)
-                        elif e < 3.0:
+			elif e < 3.0:
 				add_score(c, -1)
-                        elif e < 2.5:
+			elif e < 2.5:
 				add_score(c, -2)
 
-                len_count[c] += 1
+		len_count[c] += 1
 
-                if len_count[c] > limit:
-                        del len_count[c]
-                        del len_dist[c]
-                        del score[c]
+		if len_count[c] > limit:
+			del len_count[c]
+			del len_dist[c]
+			del score[c]
 
 
 sniff(filter='tcp', store=False, prn=ssr_sniffer)
